@@ -37,26 +37,26 @@ class Process():
         for time, action in person_data.items():
             if previous_action == 'catch' and action == 'normal':
                 if duration >= 8:
-                    print('1')
+                    # print('1')
                     return 1, None
                 else:
-                    print('2')
+                    # print('2')
                     return 2, first_catch_time
             elif previous_action == 'catch' and action == 'put':
-                print('1')
+                # print('1')
                 return 1, None
             elif action == 'insert':
                 if duration >= 8:
-                    print('1')
+                    # print('1')
                     return 1, None
                 else:
-                    print('2')
+                    # print('2')
                     return 2, first_catch_time
             previous_action = action
 
         # catch 없이 normal만 있을 경우
         if 'catch' not in person_data.values():
-            print('1')
+            # print('1')
             return 1, None
-        print('2')
+        # print('2')
         return 2, first_catch_time

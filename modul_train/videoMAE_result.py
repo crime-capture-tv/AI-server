@@ -167,7 +167,8 @@ class MultiVideoClassification():
 
         return logits
 
-    def predict(self, date, duration, format_str):
+    def predict(self, start_time, duration):
+        date=datetime.strptime(start_time,"%Y%m%d_%H:%M:%S")
         result_dic = {}
         for video_name in self.video_list:
             video_file = os.path.join(self.video_dir, video_name)
@@ -179,12 +180,11 @@ class MultiVideoClassification():
             predicted_class_idx = logits.argmax(-1).item()
             result = self.model.config.id2label[predicted_class_idx]
 
-            video_index = int(video_name.split('.')[0].split('_')[1])
-            seg_sec = video_index * duration
+            seg_sec = int(video_name.split('.')[0].split('_')[1]) * duration
             new_date = date + timedelta(seconds=seg_sec)
-            key_time = new_date.strftime(format_str)
+            key_time = new_date.strftime("%Y%m%d_%H:%M:%S")
 
-            result_dic[key_time] = [video_index, result]
+            result_dic[key_time] = result
 
         return result_dic
 
@@ -197,8 +197,6 @@ if __name__ == '__main__':
 
     start_time="20230912_14:44:14"
     duration = 4
-
-    date=datetime.strptime(start_time,"%Y%m%d_%H:%M:%S")
 
     # classification_videos = os.listdir(video_path)
 
@@ -219,5 +217,5 @@ if __name__ == '__main__':
 
     video_classification = MultiVideoClassification(model_ckpt)
     video_classification.load_videos(video_path)
-    result = video_classification.predict(date, duration)
+    result = video_classification.predict(start_time, duration)
     print(result)
