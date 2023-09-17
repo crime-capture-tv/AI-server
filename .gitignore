@@ -1,0 +1,6 @@
+*.mp4
+*.pt
+
+yourstore/models/
+yourstore/.idea/
+yourstore/__pycache__/
