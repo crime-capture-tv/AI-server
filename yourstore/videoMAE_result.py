@@ -192,13 +192,16 @@ class MultiVideoClassification():
 if __name__ == '__main__':
     
     model_ckpt = "./models/20230914/checkpoint-426"   # best
+    # model_ckpt = "./models/20230916/checkpoint-599"
 
-    video_path = 'data/test_video/절도_crop'
+    video_path = 'data/multi_cam/insert_2_crop'
 
-    start_time="20230912_14:44:14"
+    start_time="20230912-14-44-14"
     duration = 4
 
-    date=datetime.strptime(start_time,"%Y%m%d_%H:%M:%S")
+    format_str = "%Y%m%d-%H-%M-%S"
+
+    date=datetime.strptime(start_time,format_str)
 
     # classification_videos = os.listdir(video_path)
 
@@ -219,5 +222,5 @@ if __name__ == '__main__':
 
     video_classification = MultiVideoClassification(model_ckpt)
     video_classification.load_videos(video_path)
-    result = video_classification.predict(date, duration)
+    result = video_classification.predict(date, duration, format_str)
     print(result)

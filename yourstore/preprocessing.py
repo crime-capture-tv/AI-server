@@ -215,7 +215,7 @@ class Preprocessing():
                 
 
 if __name__ == '__main__':
-    input_file = 'data/test_video/절도.mp4'
+    input_file = 'data/multi_cam/insert_2.mp4'
 
     preprocessing = Preprocessing()
 
