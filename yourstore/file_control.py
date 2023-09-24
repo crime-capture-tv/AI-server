@@ -54,20 +54,20 @@ class FileControl():
         return [local_path_1, local_path_2]
     
 
-    def save_highlight(self, input_file, hilight_network_path, time, idex):
+    def save_highlight(self, input_file, highlight_network_path, time, idex):
         input_file_path = '/'.join(input_file.split('/')[:-1])
         input_file_name = input_file.split('/')[-1].split('.')[0]
         try:
             catchvideopath = os.path.join(input_file_path, f'{input_file_name}_segment/segment_{idex:03d}.mp4')
             print(catchvideopath)
             filename = f"hilight_{time}.mp4"
-            hilight_network_full_path = os.path.join(hilight_network_path, filename)
+            hight_network_full_path = os.path.join(highlight_network_path, filename)
             print(f'Start saving highlight ...  {filename}')
             with open(catchvideopath, 'rb') as src_file:
-                with open(hilight_network_full_path, 'wb') as dst_file:
+                with open(hight_network_full_path, 'wb') as dst_file:
                     dst_file.write(src_file.read())
             print('Save complete')
-            return hilight_network_full_path
+            return hight_network_full_path
         except TypeError as e:
             print('No file!')
         except Exception as e:

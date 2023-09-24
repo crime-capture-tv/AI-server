@@ -95,11 +95,11 @@ def preprocess(item: Item):
         #     catchvideopath = os.path.join(input_file_path, f'{input_file_name}_segment/segment_{catch_time[1][1]:03d}.mp4')
         #     print(catchvideopath)
         #     filename = f"hilight_{catch_time[1][0]}.mp4"
-        #     hight_network_path = fr'\\192.168.0.42\crimecapturetv\hilight-video\{filename}'
+        #     hightlight_network_path = fr'\\192.168.0.42\crimecapturetv\hilight-video\{filename}'
         #     print(f'Start saving highlight ...  {filename}')
         #     # shutil.copy(os.path.join(catchvideopath, catchvideo), network_path)
         #     with open(catchvideopath, 'rb') as src_file:
-        #         with open(hight_network_path, 'wb') as dst_file:
+        #         with open(hightlight_network_path, 'wb') as dst_file:
         #             dst_file.write(src_file.read())
         #     print('Save complete')
         # except TypeError as e:
@@ -107,15 +107,15 @@ def preprocess(item: Item):
         # except Exception as e:
         #     print(f"An unexpected error occurred: {e}")
         
-        hight_network_path = fr'\\192.168.0.26\crimecapturetv\highlight-video'
-        hight_network_full_path = file_control.save_highlight(input_file, hight_network_path, catch_time[1][0], catch_time[1][1])
+        hightlight_network_path = fr'\\192.168.0.26\crimecapturetv\highlight-video'
+        highlight_network_full_path = file_control.save_highlight(input_file, hightlight_network_path, catch_time[1][0], catch_time[1][1])
 
         resultText = {  
             'result': 'Warning',
             # 'first_catch_time': catch_time[0][0],
             # 'last_catch_time': catch_time[-1][0],
             # 'suspicionVideoPath': suspicionVideoPath,
-            'highlightVideoPath': hight_network_full_path,
+            'highlightVideoPath': highlight_network_full_path,
             'crimeType': 'theft'
         }
 
