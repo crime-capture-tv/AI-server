@@ -12,7 +12,7 @@ def stream_video(url, position):
     frame_count = 0
     fps = 0.0
     start_time = time.time()
-    try:
+    try:    
         stream = requests.get(url, stream=True, timeout=5)  
     except requests.exceptions.RequestException as e:
         print(f"Could not connect to stream at {url}")
@@ -78,8 +78,8 @@ save_signal = False
 
 cv2.namedWindow('Stream', cv2.WINDOW_NORMAL)
 
-url1 = "http://172.17.110.23:8000/stream.mjpeg"
-url2 = "http://192.168.0.12:8000/stream.mjpeg"
+url1 = "http://192.168.0.30:8000/stream.mjpeg"
+url2 = "http://192.168.0.11:8000/stream.mjpeg"
 
 thread1 = Thread(target=stream_video, args=(url1, 0))
 thread2 = Thread(target=stream_video, args=(url2, 1))

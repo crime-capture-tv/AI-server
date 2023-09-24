@@ -3,10 +3,8 @@ from torchvision.transforms import Compose, Lambda, Normalize, Resize, ToPILImag
 from pytorchvideo.transforms import ApplyTransformToKey, UniformTemporalSubsample
 from transformers import VideoMAEImageProcessor, VideoMAEForVideoClassification
 from datetime import datetime, timedelta
-from IPython.display import Image
 import torch
 import os
-import imageio
 
 
 class OneVideoClassification():
@@ -75,6 +73,7 @@ class OneVideoClassification():
         inputs = {"pixel_values": perumuted_sample_test_video.unsqueeze(0)}
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # device = torch.device("cpu")
         inputs = {k: v.to(device) for k, v in inputs.items()}
         model = model.to(device)
 
@@ -110,15 +109,18 @@ class MultiVideoClassification():
         self.num_frames_to_sample = self.model.config.num_frames
 
        
-    def load_videos(self, video_dir):
-        self.video_dir = video_dir
-        self.video_list = [f for f in os.listdir(video_dir) if f.endswith('.mp4')]
-    
-        video_file = os.path.join(self.video_dir, self.video_list[0])
-        video, _, _ = read_video(video_file, pts_unit="sec")
-        self.video = video.permute(3, 0, 1, 2)
+    def load_videos(self, input_file):
+        input_file_path = '/'.join(input_file.split('/')[:-1])
+        input_file_name = input_file.split('/')[-1].split('.')[0]
+        self.video_dir = os.path.join(input_file_path, f'{input_file_name}_crop')
 
-        return self.video
+        self.video_list = [f for f in os.listdir(self.video_dir) if f.endswith('.mp4')]
+    
+        # video_file = os.path.join(self.video_dir, self.video_list[0])
+        # video, _, _ = read_video(video_file, pts_unit="sec")
+        # self.video = video.permute(3, 0, 1, 2)
+
+        # return self.video
 
 
     def transform_video(self, video):
@@ -194,7 +196,7 @@ if __name__ == '__main__':
     model_ckpt = "./models/20230914/checkpoint-426"   # best
     # model_ckpt = "./models/20230916/checkpoint-599"
 
-    video_path = 'data/multi_cam/insert_2_crop'
+    video_path = 'data/multi_cam/insert_2'
 
     start_time="20230912-14-44-14"
     duration = 4

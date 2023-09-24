@@ -1,11 +1,12 @@
+from typing import Union, Optional
+from fastapi import FastAPI
+from datetime import datetime
+from pydantic import BaseModel
+
 from videoMAE_result import MultiVideoClassification
 from preprocessing import Preprocessing
 from classification_process import ClassificationProcess
-import os
-from typing import Union
-from fastapi import FastAPI
-import shutil
-from datetime import datetime, timedelta
+from file_control import FileControl
 
 model_ckpt = "./models/20230916/checkpoint-599"
 
@@ -13,6 +14,13 @@ app = FastAPI()
 preprocessing = Preprocessing()
 video_classification = MultiVideoClassification(model_ckpt)
 classification_process = ClassificationProcess()
+file_control = FileControl()
+
+class Item(BaseModel):
+    suspicionVideoPath01: str
+    suspicionVideoPath02: str
+    stayStartTime: Optional[str] = None
+    stayEndTime: Optional[str] = None
 
 
 @app.get('/')
@@ -20,60 +28,62 @@ def main():
     return 'classification api'
 
 
-@app.get('/classification')
-def preprocess(recordedAt: Union[str, None] = None, suspicionVideoPath: Union[str, None] = None):
-    format_str = "%Y%m%d-%H-%M-%S"
-    start_time="20230912-14-44-14"
+@app.post('/classification')
+# def preprocess(suspicionVideoPath01: Union[str, None] = None, suspicionVideoPath02: Union[str, None] = None):
+def preprocess(item: Item):
+    print(item)
+    format_str = "%Y-%m-%d-%H-%M-%S"
+    start_time="2023-09-12-14-44-14"
     duration = 4
     counter_time = {
-        'startTime': '20230915-21-57-40',
-        'endTime': '20230915-21-57-59'
+        'startTime': item.stayStartTime,
+        'endTime': item.stayEndTime 
     }
 
     # use network path
-    print(f'video downloading ... {suspicionVideoPath}')
-    network_path = suspicionVideoPath
-    network_file_name = network_path.split('\\')[-1]
-    local_path = f'output/{network_file_name}'
-    shutil.copy(network_path, local_path)
-    print(f'video download complete!')
+    local_paths = file_control.download_file(item.suspicionVideoPath01, item.suspicionVideoPath02)
 
-    input_file = local_path
+    # test local video
+    # local_paths = ['data/multi_cam/insert_1.mp4', 'data/multi_cam/insert_2.mp4']
 
-    # Preprocessing 
     resolution = {'width': 640, 'height': 480}
     target_fps = 30
 
-    preprocessing.file_load(input_file)
-    preprocessing.regulate_resolution_fps(resolution, target_fps)
-    preprocessing.segment_video(segment_duration=4, step_duration=2)
-    preprocessing.crop_and_save_video()
-    preprocessing.delete_short_videos(min_duration=2.0)
-
-    # video classification
-    input_file_path = '/'.join(input_file.split('/')[:-1])
-    input_file_name = input_file.split('/')[-1].split('.')[0]
-    video_path = os.path.join(input_file_path, f'{input_file_name}_crop')
-
     date=datetime.strptime(start_time,format_str)
 
-    video_classification.load_videos(video_path)
-    person_data = video_classification.predict(date, duration, format_str)
-    # print(person_data)
+    input_files = local_paths
+    for idx, input_file in enumerate(input_files):
+        # Preprocessing 
+        preprocessing.file_load(input_file)
+        preprocessing.regulate_resolution_fps(resolution, target_fps)
+        preprocessing.segment_video(segment_duration=4, step_duration=2)
+        preprocessing.crop_and_save_video()
+        preprocessing.delete_short_videos(min_duration=2.0)
 
+        # Video classification 
+        video_classification.load_videos(input_file)
+        person_data = video_classification.predict(date, duration, format_str)
+        if idx == 0:
+            result_dic_1 = person_data
+        elif idx == 1:
+            result_dic_2 = person_data
+
+    # print(result_dic)
 
     # result analyze
-    status, catch_time = classification_process.check_behavior(person_data, counter_time, format_str)
+    classification_process.compare_results(result_dic_1, result_dic_2)
+    status, catch_time = classification_process.check_behavior(counter_time, format_str)
+    print(catch_time)
 
     if status == 'Clear':
-        print('Clear')
+        print('result : Clear')
 
         resultText = {
             'result': 'All clear',
-            'first_catch_time': catch_time[0][0],
-            'last_catch_time': catch_time[-1][0],
-            'suspicionVideoPath': suspicionVideoPath,
-            'highlightVideoPath': None,
+            # 'first_catch_time': catch_time[0][0],
+            # 'last_catch_time': catch_time[-1][0],
+            # 'suspicionVideoPath': suspicionVideoPath,
+            'highlightVideoPath': 'no highlight',
             'crimeType': 'normal'
         }
 
@@ -81,32 +91,35 @@ def preprocess(recordedAt: Union[str, None] = None, suspicionVideoPath: Union[st
         print(f'Warning!  first_catch_time : {catch_time[0][0]}')
 
         # highlight file save
-        try:
-            catchvideopath = os.path.join(input_file_path, f'{input_file_name}_segment/segment_{catch_time[1][1]:03d}.mp4')
-            print(catchvideopath)
-            filename = f"hilight_{catch_time[1][0]}.mp4"
-            hilight_network_path = fr'\\192.168.0.42\crimecapturetv\hilight-video\{filename}'
-            print(f'Start saving highlight ...  {filename}')
-            # shutil.copy(os.path.join(catchvideopath, catchvideo), network_path)
-            with open(catchvideopath, 'rb') as src_file:
-                with open(hilight_network_path, 'wb') as dst_file:
-                    dst_file.write(src_file.read())
-            print('Save complete')
-        except TypeError as e:
-            print('No file!')
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+        # try:
+        #     catchvideopath = os.path.join(input_file_path, f'{input_file_name}_segment/segment_{catch_time[1][1]:03d}.mp4')
+        #     print(catchvideopath)
+        #     filename = f"hilight_{catch_time[1][0]}.mp4"
+        #     hilight_network_path = fr'\\192.168.0.42\crimecapturetv\hilight-video\{filename}'
+        #     print(f'Start saving highlight ...  {filename}')
+        #     # shutil.copy(os.path.join(catchvideopath, catchvideo), network_path)
+        #     with open(catchvideopath, 'rb') as src_file:
+        #         with open(hilight_network_path, 'wb') as dst_file:
+        #             dst_file.write(src_file.read())
+        #     print('Save complete')
+        # except TypeError as e:
+        #     print('No file!')
+        # except Exception as e:
+        #     print(f"An unexpected error occurred: {e}")
+        
+        hilight_network_path = fr'\\192.168.0.26\crimecapturetv\hilight-video'
+        hilight_network_full_path = file_control.save_highlight(input_file, hilight_network_path, catch_time[1][0], catch_time[1][1])
 
-        resultText = {
+        resultText = {  
             'result': 'Warning',
-            'first_catch_time': catch_time[0][0],
-            'last_catch_time': catch_time[-1][0],
-            'suspicionVideoPath': suspicionVideoPath,
-            'highlightVideoPath': hilight_network_path,
+            # 'first_catch_time': catch_time[0][0],
+            # 'last_catch_time': catch_time[-1][0],
+            # 'suspicionVideoPath': suspicionVideoPath,
+            'highlightVideoPath': hilight_network_full_path,
             'crimeType': 'theft'
         }
 
 
-
+    
     print(resultText)
     return resultText

@@ -1,0 +1,355 @@
+import cv2
+import shutil
+import requests
+import requests
+import numpy as np
+from threading import Thread
+from datetime import datetime
+from ultralytics import YOLO
+from ultralytics.utils.plotting import Annotator
+import os
+import json
+
+
+class VideoStreamer:
+    def __init__(self, url1, url2, network_storage, request_server_url, video_out_dir='output', img_path='logo2.png', request=False, plot_box=True):
+        self.url1 = url1
+        self.url2 = url2
+        self.network_storage = network_storage
+        self.request_server_url = request_server_url
+        self.request = request
+        self.plot_box = plot_box
+
+        self.format_str = "%Y-%m-%d-%H-%M-%S"
+
+        self.exit_signal = False
+        self.fourcc = cv2.VideoWriter_fourcc(*'H264')
+        self.out = [None, None]
+        self.recording = False
+        self.recoding_signal = False
+        self.video_out_dir = video_out_dir
+        self.img_path = img_path
+        self.frame = [None, None, None]
+        self.stay_time = {'stayStartTime': None, 'stayEndTime': None}
+        self.rec_start_time = None
+        self.rec_end_time = None
+        self.last_recoding_end_time = None
+        self.send_request_signal = False
+        self.last_request_time = None
+        self.last_print_time = None
+
+        self.model = YOLO('yolov8n.pt')
+
+    def stream_video(self, url, position):
+        frame_count = 0
+        fps = 0.0
+        start_time = datetime.now()
+        predict_signal = False
+
+        try:    
+            stream = requests.get(url, stream=True, timeout=5)  
+        except requests.exceptions.RequestException as e:
+            print(f"Could not connect to stream at {url}")
+            return
+
+        byte_stream = b""
+
+        while True:
+            for chunk in stream.iter_content(chunk_size=1024):
+                byte_stream += chunk
+                a = byte_stream.find(b'\xff\xd8')
+                b = byte_stream.find(b'\xff\xd9')
+
+                if a != -1 and b != -1:
+                    frame_count += 1
+                    elapsed_time = datetime.now() - start_time
+                    fps = frame_count / elapsed_time.total_seconds()
+
+                    jpg = byte_stream[a:b+2]
+                    byte_stream = byte_stream[b+2:]
+                    img = cv2.imdecode(np.frombuffer(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
+
+                    if img is not None:
+                        cv2.putText(img, f"CCTV{position}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                        cv2.putText(img, f"FPS: {fps:.0f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 1)
+
+                        if predict_signal:
+                            results = self.model.predict(img, classes=[0], verbose=False, device='cpu')
+
+                            if len(results[0].boxes) == 0:
+                                self.recoding_signal = False
+                            else:
+                                self.recoding_signal = True
+
+                            for r in results:
+                                annotator = Annotator(img)
+                                boxes = r.boxes
+                                for box in boxes:
+                                    b = box.xyxy[0]
+                                    c = box.cls
+                                    if self.plot_box:
+                                        annotator.box_label(b, self.model.names[int(c)], color=(0, 0, 255))
+
+                            frame_ = annotator.result()  
+                            self.frame[position] = frame_
+
+                            predict_signal = False
+
+                        else:
+                            self.frame[position] = img
+
+                        # 녹화 시작
+                        if self.recoding_signal and not self.recording:
+                            if not self.last_recoding_end_time:
+                                self.rec_start_time = datetime.now()
+                                self.recording = True
+                                for i in range(2):  # 두 개의 비디오 출력을 위해 반복
+                                    if self.frame[i] is not None:
+                                        self.out[i] = cv2.VideoWriter(f'{self.video_out_dir}/output{i}.mp4', self.fourcc, 24.0, (self.frame[i].shape[1], self.frame[i].shape[0]))
+                            else:
+                                time_since_last_record = (datetime.now() - self.last_recoding_end_time).total_seconds()
+                                if time_since_last_record > 3:  # 예를 들어, 마지막 녹화가 5초 이내라면 녹화를 다시 시작하지 않음
+                                    self.rec_start_time = datetime.now()
+                                    self.recording = True
+                                    for i in range(2):  # 두 개의 비디오 출력을 위해 반복
+                                        if self.frame[i] is not None:
+                                            self.out[i] = cv2.VideoWriter(f'{self.video_out_dir}/output{i}.mp4', self.fourcc, 24.0, (self.frame[i].shape[1], self.frame[i].shape[0]))
+                        
+                        # 녹화 중일 때의 프레임 쓰기
+                        if self.recording:
+                            text_width, text_height = cv2.getTextSize("recoding", cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
+                            cv2.putText(img, "Recoding", (img.shape[1] - text_width - 10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                            if self.frame[0] is not None:
+                                if self.out[0] is not None:
+                                    self.out[0].write(self.frame[0])
+                            if self.frame[1] is not None:
+                                if self.out[1] is not None:
+                                    self.out[1].write(self.frame[1])
+                            # 녹화 중일 때 2초마다 "recoding" 출력
+                            if self.last_print_time is None or (datetime.now() - self.last_print_time).total_seconds() >= 2:
+                                print("recoding ... ")
+                                self.last_print_time = datetime.now()
+
+                        if self.recording and self.rec_start_time is not None:
+                            time_elapsed_since_recording = (datetime.now() - self.rec_start_time).total_seconds()
+
+                            # 녹화 종료
+                            if not self.recoding_signal and self.recording and time_elapsed_since_recording >= 2:
+                                self.rec_end_time = datetime.now()
+                                self.last_recoding_end_time = self.rec_end_time
+                                self.recording = False
+                                # self.save_data()
+                                self.send_request_signal = True
+                        
+                        if elapsed_time.total_seconds() > 1:  # 1 second interval
+                            frame_count = 0
+                            start_time = datetime.now()
+                            predict_signal = True
+
+                    if self.exit_signal:
+                        return
+
+    def webcam_capture(self, position):
+        frame_count = 0 
+        fps = 0.0
+        start_time = datetime.now()
+        predict_signal = False
+        exceed_start_time = None
+        exceed_end_time = None
+
+        cap = cv2.VideoCapture(0)
+        
+        while True:
+            ret, frame_img = cap.read()
+            if ret:
+                frame_count += 1
+                elapsed_time = datetime.now() - start_time
+
+                fps = frame_count / elapsed_time.total_seconds()
+                cv2.putText(frame_img, f"CAM", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                cv2.putText(frame_img, f"FPS: {fps:.0f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 1)
+
+                if exceed_start_time is not None and exceed_end_time is None:
+                    cv2.putText(frame_img, "Calculating ...", (frame_img.shape[1]-200, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+
+                if predict_signal:
+                    # 예측을 위한 코드
+                    results = self.model.predict(frame_img, classes=[0], verbose=False, device='cpu')  # class 0은 '사람' 클래스에 대한 것이라고 가정합니다.
+
+                    for r in results:
+                        annotator = Annotator(frame_img)
+                        boxes = r.boxes
+                        for box in boxes:
+                            b = box.xyxy[0]
+                            c = box.cls
+                            box_width = b[2] - b[0]
+                            box_height = b[3] - b[1]
+
+                            # box_width가 400을 초과하면 시작 시간을 기록
+                            if box_width > 400 and exceed_start_time is None:
+                                exceed_start_time = datetime.now()
+
+                            # box_width가 400 미만이고 시작 시간이 이미 기록되어 있다면 종료 시간을 기록
+                            if box_width < 400 and exceed_start_time is not None:
+                                exceed_end_time = datetime.now()
+
+                                duration = (exceed_end_time - exceed_start_time).total_seconds()
+
+                                print(f"Duration when BBox Width was greater than 400: {duration:.2f} seconds")
+
+                                if duration > 4 :
+                                    self.stay_time['stayStartTime'] = exceed_start_time.strftime(self.format_str)
+                                    self.stay_time['stayEndTime'] = exceed_end_time.strftime(self.format_str)
+                                
+                                exceed_start_time = None
+                                exceed_end_time = None
+
+                            # print(f"BBox Width: {box_width:.2f}, BBox Height: {box_height:.2f}")  # bounding box의 크기를 출력합니다.
+                            if self.plot_box:
+                                annotator.box_label(b, self.model.names[int(c)], color=(0, 0, 255))
+                    if self.plot_box:
+                        frame_img = annotator.result()
+                    predict_signal = False
+
+                self.frame[position] = frame_img
+
+                if elapsed_time.total_seconds() > 1:  # 1 second interval
+                    frame_count = 0
+                    start_time = datetime.now()
+                    predict_signal = True  # 1초마다 예측을 수행하기 위해 신호를 True로 설정합니다.
+
+            if self.exit_signal:
+                return
+
+    def save_data(self):
+        self.filename_list = []
+        for idx in range(2):
+            if self.out[idx]:
+                filename = f'{self.video_out_dir}/output{idx}.mp4'
+                self.out[idx].release()
+                self.out[idx] = None
+
+                 # 영상 길이 확인
+                vid = cv2.VideoCapture(filename)
+                fps = vid.get(cv2.CAP_PROP_FPS)
+                total_frames = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
+                video_duration = total_frames / fps
+                vid.release()
+
+                if video_duration < 5:  # YOUR_THRESHOLD를 원하는 시간(초)으로 설정해주세요.
+                    os.remove(filename)
+                    print(f"The video duration of {video_duration:.2f} seconds is too short. {filename} has been deleted.")
+                else:
+                    print(f"Video saved to {filename}")
+                    print(self.stay_time)
+                    self.filename_list.append(filename)
+
+        if len(self.filename_list) == 2:
+            self.copy_and_request()
+
+    def copy_and_request(self):
+        # 파일을 원하는 위치로 복사
+        target_path_list = []
+        for idx, filename in enumerate(self.filename_list):
+            new_name = f'cctv-{idx:02d}\\C{idx}_{self.rec_start_time.strftime(self.format_str)}_{self.rec_end_time.strftime(self.format_str)}.mp4'
+            target_path = os.path.join(self.network_storage, new_name)
+            target_path_list.append(target_path)
+            shutil.copy(filename, target_path)
+        
+        print(f"File copied to {self.network_storage}")
+
+        # 복사가 완료된 후 다른 서버에 request 보내기  # 변경 필요
+        headers = {
+                "accept": "*/*",
+                "Content-Type": "application/json"
+            }
+        data = {
+                f"suspicionVideoPath01": f"{target_path_list[0]}",
+                f"suspicionVideoPath02": f"{target_path_list[1]}",
+                "stayStartTime": f"{self.stay_time['stayStartTime']}",
+                "stayEndTime": f"{self.stay_time['stayEndTime']}"
+            }
+        json_string = json.dumps(data)
+        print('send request ... ')
+        response = requests.post(self.request_server_url, data=json_string, headers=headers)
+
+        if response.status_code == 200:
+            print("Successfully sent request to the server.")
+        else:
+            # print(f"Failed to send request. Status code: {response.status_code}. Response: {response.text}")
+            print(f"Failed to send request. Status code: {response.status_code}.")
+
+    def start(self):
+        thread1 = Thread(target=self.stream_video, args=(self.url1, 0))
+        thread2 = Thread(target=self.stream_video, args=(self.url2, 1))
+        thread3 = Thread(target=self.webcam_capture, args=(2,))
+        
+        thread1.start()
+        thread2.start()
+        thread3.start()
+
+        while True:
+            if self.frame[0] is not None and self.frame[1] is not None and self.frame[2] is not None:
+                h1, w1 = self.frame[0].shape[:2]
+                h2, w2 = self.frame[1].shape[:2]
+                h3, w3 = self.frame[2].shape[:2]
+            else:
+                h1, w1, h2, w2, h3, w3 = 480, 640, 480, 640, 480, 640  # Default dimensions, you can change this
+
+            height = max(h1, h2, h3)
+            width = max(w1, w2, w3)
+            
+            black_frame = np.zeros((height, width, 3), dtype=np.uint8)
+
+            if self.send_request_signal and self.request:
+                self.send_request_signal = False
+                print(self.last_request_time)
+                if self.last_request_time is None or (datetime.now() - self.last_request_time).total_seconds() >= 2:
+                    self.last_request_time = datetime.now()
+                    thread4 = Thread(target=self.save_data)
+                    thread4.start()
+                else:
+                    print('thread is not ready')
+            
+            def get_frame_or_signal(frame):
+                if frame is None:
+                    frame_with_text = black_frame.copy()
+                    cv2.putText(frame_with_text, 'No Signal', (width // 4, height // 2), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                    return frame_with_text
+                else:
+                    return cv2.resize(frame, (width, height))
+            
+            resized_frame0 = get_frame_or_signal(self.frame[0])
+            resized_frame1 = get_frame_or_signal(self.frame[1])
+            resized_frame2 = get_frame_or_signal(self.frame[2])
+
+            img_path = 'logo.png'
+            img = cv2.imread(img_path)
+            img = cv2.resize(img, (width, height))
+            
+            upper_frame = np.hstack((resized_frame0, resized_frame1))
+            lower_frame = np.hstack((resized_frame2, img))
+            both_frames = np.vstack((upper_frame, lower_frame))
+            
+            cv2.imshow('Stream', both_frames)
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                self.exit_signal = True
+                break
+
+        thread1.join()
+        thread2.join()
+        thread3.join()
+        cv2.destroyAllWindows()
+
+    def process_frames(self):
+        return self.frame
+
+if __name__ == "__main__":
+    url1 = "http://192.168.0.30:8000/stream.mjpeg"
+    url2 = "http://192.168.0.17:8000/stream.mjpeg"
+    network_storage = '\\\\192.168.0.26\\crimecapturetv\\suspicion-video'
+    request_server_url = "http://192.168.0.5:8080/api/v1/stores/1/videos?storeNo=1"
+
+    streamer = VideoStreamer(url1, url2, network_storage, request_server_url, request=True, plot_box=False)
+    streamer.start()

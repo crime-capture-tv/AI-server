@@ -9,7 +9,7 @@ import shutil
 
 class Preprocessing():
     def __init__(self):
-        self.model = YOLO("yolov8s.pt")
+        self.model = YOLO("yolov8n.pt")
 
     
     def file_load(self, input_file):
@@ -140,6 +140,7 @@ class Preprocessing():
 
 
     def crop_and_save_video(self):
+        print('cropping video ...')
         input_dir = self.segment_dir_name
         self.crop_dir_name = f'{self.input_file_path}/{self.input_file_name}_crop'
 
@@ -171,7 +172,7 @@ class Preprocessing():
                 if not ret:
                     break
 
-                results = self.model.predict(frame, conf=0.5, classes=0, verbose=False)
+                results = self.model.predict(frame, conf=0.5, classes=0, verbose=False, device='cuda')
                 try:
                     cords = results[0].boxes[0].xyxy.tolist()
                     if len(results) > 0:
@@ -188,6 +189,8 @@ class Preprocessing():
 
             cap.release()
             out.release()
+        
+        print('crop done')
 
 
     def delete_short_videos(self, min_duration=2.0):
