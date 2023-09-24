@@ -11,9 +11,9 @@ app = Flask(__name__)
 url1 = "http://192.168.0.30:8000/stream.mjpeg"
 url2 = "http://192.168.0.17:8000/stream.mjpeg"
 network_storage = '\\\\192.168.0.26\\crimecapturetv\\suspicion-video'
-request_server_url = "http://192.168.0.12:8082/api/v1/stores/1/videos?storeNo=1"
+request_server_url = "http://192.168.0.12:8080/api/v1/stores/1/videos?storeNo=1"
 
-streamer = VideoStreamer(url1, url2, network_storage, request_server_url)
+streamer = VideoStreamer(url1, url2, network_storage, request_server_url, request=True, plot_box=False)
 
 # Start the threads outside of the route or function
 thread1 = Thread(target=streamer.stream_video, args=(url1, 0))
