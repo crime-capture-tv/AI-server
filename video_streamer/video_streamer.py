@@ -127,7 +127,7 @@ class VideoStreamer:
                         # Write frames to video if recording is active
                         if self.recording:
                             # Overlay "Recoding" text on the frame
-                            text_width, text_height = cv2.getTextSize("recoding", cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
+                            text_width, text_height = cv2.getTextSize("recording", cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)[0]
 
                              # Write frames to output video
                             cv2.putText(img, "Recoding", (img.shape[1] - text_width - 10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
@@ -390,10 +390,11 @@ class VideoStreamer:
         return self.frame
 
 if __name__ == "__main__":
-    url1 = "http://192.168.0.30:8000/stream.mjpeg"
-    url2 = "http://192.168.0.17:8000/stream.mjpeg"
+    url1 = "http://192.168.0.29:8000/stream.mjpeg"
+    url2 = "http://192.168.0.85:8000/stream.mjpeg"
     network_storage = '\\\\192.168.0.26\\crimecapturetv\\suspicion-video'
     request_server_url = "http://192.168.0.5:8080/api/v1/stores/1/videos?storeNo=1"
 
     streamer = VideoStreamer(url1, url2, network_storage, request_server_url, request=True, plot_box=False)
     streamer.start()
+
