@@ -193,7 +193,7 @@ class Preprocessing():
         print('crop done')
 
 
-    def delete_short_videos(self, min_duration=2.0):
+    def delete_short_videos(self, min_duration=1):
         output_dir = self.crop_dir_name
         # 출력 디렉터리에서 모든 파일 가져오기
         for segment_name in os.listdir(output_dir):

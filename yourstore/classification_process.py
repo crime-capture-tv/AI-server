@@ -12,7 +12,8 @@ class ClassificationProcess():
                 self.result_dic[key1] = result_dic_1[key1]
             else:
                 self.result_dic[key1] = [result_dic_1[key1][0], 'pass']
-        
+        print('-----result_dic-----')
+        print(self.result_dic)
 
     def check_behavior(self, counter_time, format_str):
         calculation_check = False
@@ -52,10 +53,10 @@ class ClassificationProcess():
                 elif action[1] == 'pass':
                     pass
                 
-                action_time = datetime.strptime(time, format_str)
-                if start_time < action_time < end_time and calculation_check:
-                    if duration >= 6:
-                        calculation_check = False
+                # action_time = datetime.strptime(time, format_str)
+                # if start_time < action_time < end_time and calculation_check:
+                if duration >= 4:
+                    calculation_check = False
 
         if len(catch_times)==0:
             catch_times = [[None, None], [None, None]] 

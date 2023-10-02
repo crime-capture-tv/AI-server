@@ -60,7 +60,7 @@ class FileControl():
         try:
             catchvideopath = os.path.join(input_file_path, f'{input_file_name}_segment/segment_{idex:03d}.mp4')
             print(catchvideopath)
-            filename = f"hilight_{time}.mp4"
+            filename = f"highlight_{time}.mp4"
             hight_network_full_path = os.path.join(highlight_network_path, filename)
             print(f'Start saving highlight ...  {filename}')
             with open(catchvideopath, 'rb') as src_file:

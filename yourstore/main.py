@@ -33,7 +33,9 @@ def main():
 def preprocess(item: Item):
     print(item)
     format_str = "%Y-%m-%d-%H-%M-%S"
-    start_time="2023-09-12-14-44-14"
+    # start_time="2023-09-12-14-44-14"
+    start_time = item.suspicionVideoPath01.split('\\')[-1].split('_')[1]
+    print(start_time)
     duration = 4
     counter_time = {
         'startTime': item.stayStartTime,
@@ -71,6 +73,10 @@ def preprocess(item: Item):
     # print(result_dic)
 
     # result analyze
+    print('-----result_dic_1-----')
+    print(result_dic_1)
+    print('-----result_dic_2-----')
+    print(result_dic_2)
     classification_process.compare_results(result_dic_1, result_dic_2)
     status, catch_time = classification_process.check_behavior(counter_time, format_str)
     print(catch_time)
