@@ -2,7 +2,7 @@
 
 메타버스 아카데미 9월 프로젝트
 
-#### 🎥 시연 영상 보러가기(Click)
+#### 🎥 시연 영상 보러가기([Click](https://www.youtube.com/watch?v=6DgZkKN7O5s))
 #### 📙 발표자료 보러가기(Click)
 
 <img src="https://github.com/crime-capture-tv/AI-server/assets/141614581/ace435a8-d4b3-4291-8627-dc59e052e55d" width="70%">
@@ -16,17 +16,17 @@
 #### AI
 | AI | AI | AI | AI |
 |:--:|:--:|:--:|:--:|
-| 정민교 | 김종민 | 김찬영 | 최눈솔 |
+| [정민교](https://github.com/MinkyoJeong1) | [김종민](https://github.com/jongminKims) | [김찬영](https://github.com/cykim1228) | [최눈솔](https://github.com/choiary) |
 
 #### Server
 | server | server | server |
 |:------:|:------:|:------:|
-| 박태근 | 김나영 | 이주원 |
+| [박태근](https://github.com/taegeun-park0525) | [김나영](https://github.com/kny3037) | [이주원](https://github.com/juunewon) |
 
 #### 기획
 | 기획 | 기획 | 기획 |
 |:---:|:---:|:---:|
-| 김영식 | 이성균 | 이지수 |
+| [김영식](https://github.com/sikomar00) | [이성균](https://github.com/seongkyunlee) | [이지수](https://github.com/geeeeesu) |
 
 <br/>
 
@@ -175,9 +175,19 @@
         </tbody>
     </table>
 
-<br/>
+### 3. Classification algorithm
 
-### 3. Model train
+<img src="https://github.com/crime-capture-tv/AI-server/assets/141614581/90917a46-cfe2-4316-b0d0-8518c2f3e512" width="70%">
+
+### 4. Raspberry Pi
+
+- picamera와 socketserver를 사용하여 cctv영상을 실시간으로 송출.
+- 분류 정확도를 위하여 Raspberry Pi 2대를 이용하여 영상을 분석함.
+- pc에서 두 영상에서 사람이 있는 경우에만 녹화를 진행하고 녹화된 영상을 분석함.
+
+<img src="https://github.com/crime-capture-tv/AI-server/assets/141614581/2ec8a1e4-12c8-4838-bc32-dafb11b181ef" width="70%">
+
+<br/>
 
 # 기술 스택
 
@@ -185,7 +195,7 @@
 <img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white">
 
 ### - 주요 라이브러리
- <img src="https://img.shields.io/badge/fastapi-009688?style=for-the-badge&logo=fastapi&logoColor=white"> <img src="https://img.shields.io/badge/pytorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white"> <img src="https://img.shields.io/badge/opencv-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white">
+ <img src="https://img.shields.io/badge/fastapi-009688?style=for-the-badge&logo=fastapi&logoColor=white"> <img src="https://img.shields.io/badge/pytorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white"> <img src="https://img.shields.io/badge/opencv-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white"> <img src="https://img.shields.io/badge/yolov8-00FFFF?style=for-the-badge&logo=yolo&logoColor=white">
 
 ### - 개발 툴
 <img src="https://img.shields.io/badge/VS code-2F80ED?style=for-the-badge&logo=VS code&logoColor=white"> <img src="https://img.shields.io/badge/Google Colab-F9AB00?style=for-the-badge&logo=Google Colab&logoColor=white">
@@ -197,23 +207,11 @@
 
 ### Papers
 
-1. [Isola, P., Zhu, J., Zhou, T., & Efros, A. A. (2017, November 22). Image-to-Image Translation with Conditional Adversarial Networks. Arxiv. https://arxiv.org/abs/1611.07004](https://arxiv.org/abs/1611.07004)
+1. [Tong, Z., Song, Y., Wang, J., & Wang, L. (2022, October 18). VideoMAE: Masked Autoencoders Are Data-Efficient Learners for Self-Supervised Video Pre-Training. Arxiv. https://arxiv.org/abs/2203.12602](https://arxiv.org/abs/2203.12602)
+2. [Arnab, A., Dehghani, M., Heigold, G., Sun, C., Lučić, M., & Schmid, C. (2021, November 1). ViViT: A Video Vision Transformer. Arxiv. https://arxiv.org/abs/2103.15691](https://arxiv.org/abs/2103.15691)
 
 ### GitHub
 
-1. [pytorch-CycleGAN-and-pix2pix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix)
-2. [pytorch-hed](https://github.com/sniklaus/pytorch-hed)
-3. [FloorplanToBlender3d](https://github.com/grebtsew/FloorplanToBlender3d)
+1. [VideoMAE](https://github.com/MCG-NJU/VideoMAE)
+2. [ViViT](https://github.com/rishikksh20/ViViT-pytorch)
 
-### Blog
-
-1. [[논문실습] Pix2Pix](https://velog.io/@wilko97/%EB%85%BC%EB%AC%B8%EC%8B%A4%EC%8A%B5-Pix2Pix)
-2. [딥러닝 기반 건축도면 생성 모델 개발](https://brunch.co.kr/@ddkddk35/10)
-
-<br/>
-
-<br/>
-
----
-
-special thanks to [정민](https://github.com/min731)
