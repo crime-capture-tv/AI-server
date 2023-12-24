@@ -1,15 +1,15 @@
-# Crime Capture TV : 무인점포 이상행동 탐지 시스템 (AI part)
+# 📹 Crime Capture TV : 무인점포 이상행동 탐지 시스템 (AI part)
 
 메타버스 아카데미 9월 프로젝트
 
 #### 🎥 시연 영상 보러가기([Click](https://www.youtube.com/watch?v=6DgZkKN7O5s))
-#### 📙 발표자료 보러가기(Click)
+#### 📙 발표자료 보러가기([Click](https://github.com/crime-capture-tv/AI-server/blob/main/docs/Crime_capture_TV_presentation.pdf))
 
 <img src="https://github.com/crime-capture-tv/AI-server/assets/141614581/ace435a8-d4b3-4291-8627-dc59e052e55d" width="70%">
 
 <br/>
 
-# 팀원 소개 및 역할
+# :family: 팀원 소개 및 역할
 
 **개발기간: 2023.09.04 ~ 2023.09.27**
 
@@ -55,13 +55,13 @@
 
 <br/>
 
-# 융합 구조도
+# 🤝 융합 구조도
 
 <img src="https://github.com/crime-capture-tv/AI-server/assets/141614581/8331fda9-c20e-4ec2-b15c-c77a56ed916d" width="70%">
 
 <br/>
 
-# 프로젝트 소개
+# 💡 프로젝트 소개
 
 **cctv를 이용하여 무인점포 내에서 일어나는 이상행동을 감지하는 시스템을 제작**
 
@@ -71,7 +71,7 @@
 
 <br/>
 
-# 주요 내용
+# :scroll: 주요 내용
 
 ### 1. Prepare data set
 
@@ -81,25 +81,25 @@
   [실내(편의점, 매장) 사람 이상행동 데이터](https://www.aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=realm&dataSetSn=71550)를 이용하였다.
   
 - #### Preprocessing
-  1) 원본 데이터에서 원하는 부분 편집
+  **1) 원본 데이터에서 원하는 부분 편집**
 
      원본 데이터는 1분짜리 긴 영상이었으므로 우리가 원하는 행동을 하는 구간만 찾아서 편집하였다. 사람의 행동 당 라벨을 부여하여 catch, put, insert, normal로 분류하였고 라벨당 약 300개의 2~5초짜리 영상을 준비하였다.
      
-  3) 편집된 영상의 화질 조절
+  **2) 편집된 영상의 화질 조절**
 
      원본 영상의 크기는 1920 x 1080 /3 fps 였으나 편집과정에서 1080 x 720 / 30 fps로 낮아졌다. 여기서 영상을 크롭하였을 때 사람의 모습이 꽉 차도록 640 x 480 으로 낮추었다.
      
-  5) 편집된 영상 증강
+  **3) 편집된 영상 증강**
 
      영상이 라벨당 약 300개 정도 준비하였지만 모델 학습시에 과적합이 발생하여 데이터를 증강 시켰다.
      영상 데이터 증강에 관한 부분은 ['3차원 의료 영상의 영역 분할을 위한 효율적인 데이터 보강 방법'](https://koreascience.kr/article/JAKO202109156813970.pdf)이라는 논문을 참고하였음.
 	    
 	    증강 방법
-	    - Rotation  :  -10° ~ 10°
-	    - Brightness  :  -50 ~ 50
-	    - RGB  :  -30 ~ 30
+	    Rotation  :  -10° ~ 10°
+	    Brightness  :  -50 ~ 50
+	    RGB  :  -30 ~ 30
        
-  7) 사람이 있는 부분만 Crop
+  **4) 사람이 있는 부분만 Crop**
 
      모델이 input으로 받는 영상의 사이즈가 224 x 224 / 16 fps 의 영상이기 때문에 처음에는 기존 영상의 사이즈를 줄여서 넣는 방향으로 진행하였지만
      성능이 좋지 못하여 사람이 있는 부분을 찾아서 사람을 중심으로 224 x 224 크기로 자른 다음에 학습을 진행하였다. 사람을 찾기 위해서 [YOLOv8](https://docs.ultralytics.com/)을 사용.
@@ -189,7 +189,7 @@
 
 <br/>
 
-# 기술 스택
+# 🛠 기술 스택
 
 ### - 언어
 <img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white">
@@ -203,12 +203,13 @@
 ### - 협업 툴
 <img src="https://img.shields.io/badge/Github-181717?style=for-the-badge&logo=Github&logoColor=white"> <img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=Notion&logoColor=white">
 
-# 참고자료
+# 🔍 참고자료
 
 ### Papers
 
 1. [Tong, Z., Song, Y., Wang, J., & Wang, L. (2022, October 18). VideoMAE: Masked Autoencoders Are Data-Efficient Learners for Self-Supervised Video Pre-Training. Arxiv. https://arxiv.org/abs/2203.12602](https://arxiv.org/abs/2203.12602)
 2. [Arnab, A., Dehghani, M., Heigold, G., Sun, C., Lučić, M., & Schmid, C. (2021, November 1). ViViT: A Video Vision Transformer. Arxiv. https://arxiv.org/abs/2103.15691](https://arxiv.org/abs/2103.15691)
+3. [Park, S. (2021, October 28). An Efficient Data Augmentation for 3D Medical Image Segmentation. Koreascience. https://koreascience.kr/article/JAKO202109156813970.pdf](https://koreascience.kr/article/JAKO202109156813970.pdf)
 
 ### GitHub
 
